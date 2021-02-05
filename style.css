@@ -1,0 +1,14 @@
+body{
+    background-color: #e9ebf0;
+    font-family: Helvetical, Arial;
+
+}
+
+.header{
+    background-color: #0093d5;
+    padding: 10px;
+}
+
+.header h1{
+    color: #fff;
+}
