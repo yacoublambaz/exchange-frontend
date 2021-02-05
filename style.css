@@ -12,3 +12,18 @@ body{
 .header h1{
     color: #fff;
 }
+
+.wrapper{
+    margin-top: 50px;
+    background-color: #fff;
+    border-radius:15px;
+    margin-left:auto;
+    margin-right:auto;
+    padding:30px;
+}
+
+.wrapper p {
+    font-style: italic;
+    color: #666;
+
+}
