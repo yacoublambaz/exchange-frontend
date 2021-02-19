@@ -5,6 +5,33 @@ var USDAmount = document.getElementById('usd-amount');
 var TransactionType = document.getElementById('transaction-type');
 var sellUSDTransactions = [];
 var buyUSDTransactions = [];
+var SERVER_URL = "http://127.0.0.1:5000"
+
+
+function fetchRates() {
+ fetch('http://127.0.0.1:5000/exchangeRate')
+ .then(response => response.json())
+ .then(data => console.log(data));
+}
+fetchRates();
+
+async function postData(url = '', data = {}) {
+
+  const response = await fetch(url, {
+    method: 'POST',
+    mode: 'cors',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    redirect: 'follow',
+    referrerPolicy: 'no-referrer',
+    body: JSON.stringify(data) // body data type must match "Content-Type" header
+  });
+  return response.json(); // parses JSON response into native JavaScript objects
+}
+
 
 
 
@@ -19,20 +46,6 @@ function addItem(){
         buyUSDTransactions.push(rate);
     }
     //addButton.reset();
-    updateRates();
-}
+    postData('http://127.0.0.1:5000/', {'usd':USDAmount.value,'lbp':LBPAmount.value,'usd_to_lbp':TransactionType.value })
 
-function updateRates(){
-    let sellrate = sellUSDTransactions.reduce(function(a,b){ return a+b;},0)/sellUSDTransactions.length;
-    let buyrate = buyUSDTransactions.reduce(function(a,b){ return a+b;},0)/buyUSDTransactions.length;
-    if (sellrate > 0){
-        document.getElementById('sell-usd-rate').innerHTML = sellrate;
-    }
-    if (buyrate > 0){
-        document.getElementById('buy-usd-rate').innerHTML = buyrate;
-    }
-    
-    
-   
 }
-
