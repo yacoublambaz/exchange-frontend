@@ -11,7 +11,7 @@ function App() {
         <p> LBP to USD Exchange Rate</p>
         <h3>Buy USD: <span id = "buy-usd-rate">Not Available</span></h3>
         <h3>Sell USD: <span id = "sell-usd-rate">Not Available</span></h3>
-        <hr>
+        <hr/>
         <h2>Record a Recent Transaction</h2>
         <form name = "transaction-entry">
             <div className = "amount-input">
