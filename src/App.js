@@ -11,17 +11,23 @@ import Snackbar from '@material-ui/core/Snackbar'
 import Alert from '@material-ui/lab/alert'
 import { getUserToken, saveUserToken } from
 "./localStorage";
-
+import { useCallback } from "react";
+import {DataGrid} from '@material-ui/data-grid';
 
 var SERVER_URL = "http://127.0.0.1:5000"
 function App() {
+  let [userTransactions, setUserTransactions] = useState([]);
   let [buyUsdRate, setBuyUsdRate] = useState(0);
   let [sellUsdRate, setSellUsdRate] = useState(0);
   let TransactionType = document.getElementById('transaction-type');
+  let ChangeTransactionType = document.getElementById('change-transaction-type');
+  let [changeTransactionType,setChangeTransactionType] = useState("usd-to-lbp")
   let [lbpInput,setLbpInput] = useState("");
   let [usdInput,setUsdInput] = useState("");
+  let [changeInput,setChangeInput] = useState("");
+  let [changeOutput,setChangeOutput] = useState("");
   let [transactionType,setTransactionType] = useState("usd-to-lbp");
-   let [userToken, setUserToken] = useState(getUserToken())
+  let [userToken, setUserToken] = useState(getUserToken())
 
   const States = {
  PENDING: "PENDING",
@@ -55,7 +61,8 @@ async function postData(url = '', data = {}) {
     cache: 'no-cache',
     credentials: 'same-origin',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization':`bearer ${userToken}`
     },
     redirect: 'follow',
     referrerPolicy: 'no-referrer',
@@ -96,6 +103,20 @@ function login(username, password) {
  }).then((response) => login(username, password));
  }
 
+ const fetchUserTransactions = useCallback(() => {
+  fetch(`${SERVER_URL}/`, {
+  headers: {
+  Authorization: `bearer ${userToken}`,
+  },
+  })
+  .then((response) => response.json())
+  .then((transactions) => setUserTransactions(transactions));
+  }, [userToken]);
+  useEffect(() => {
+  if (userToken) {
+  fetchUserTransactions();
+  }
+  }, [fetchUserTransactions, userToken]);
 
 
 
@@ -107,6 +128,28 @@ function addItem(){
     postData('http://127.0.0.1:5000/', {'usd':usdInput,'lbp':lbpInput,'usd_to_lbp':TransactionType.value })
 }
 
+function change(){
+  let change = changeInput.changeInput;
+  console.log(change)
+  if (changeTransactionType.value === 'usd_to_lbp'){
+    changeOutput = changeInput * sellUsdRate;
+
+  }
+  else{
+    changeOutput = changeInput * buyUsdRate;
+
+  };
+  if (changeOutput !== 0) {
+    setChangeOutput(changeOutput);}
+
+  }
+
+const col: GridColDef[] = [
+  { field: 'added_date', headerName: 'Added Date', width: 150 },
+  { field: 'lbp', headerName: 'LBP', width: 150 },
+  { field: 'usd', headerName: 'USD', width: 150 },
+  { field: 'usd_to_lbp', headerName: 'Usd to Lbp?', width: 150 }
+]
   return (<div>
     <Snackbar
      elevation={6}
@@ -141,7 +184,26 @@ function addItem(){
     </AppBar>
 
     </div>
+    <div className = "wrapper">
+    <h2> Convert </h2>
+    <p> This section allows you to convert from currency to another </p>
 
+    <form name = "convert-entry">
+      <div className = "amount-input">
+          <label htmlFor="before"> Please enter the amount you want to convert: </label>
+          <input id="change-amount" type="number" value={changeInput} onChange={e =>
+            setChangeInput(e.target.value)}/>
+      </div>
+      <div>
+            <select id = "change-transaction-type">
+                <option value="usd-to-lbp">USD to LBP</option>
+                <option value="lbp-to-usd">LBP to USD</option>
+            </select>
+      </div>
+      <button id = "add-Button" className = "button" type = "button" onClick = {change}> Convert </button>
+    </form>
+    <h2> Your input corresponds to <span id = "changeOutput">{changeOutput}</span></h2>
+    </div>
 
     <div className = "wrapper">
 
@@ -169,8 +231,18 @@ function addItem(){
             <button id = "add-Button" className = "button" type = "button" onClick = {addItem}> Add </button>
         </form>
     </div>
-    </div>
 
+    {userToken && (
+      <div className="wrapper">
+      <Typography variant="h5">Your Transactions</Typography>
+      <DataGrid
+      columns = {col}
+      rows={userTransactions}
+      autoHeight
+      />
+      </div>
+    )}
+</div>
   );
 }
 
