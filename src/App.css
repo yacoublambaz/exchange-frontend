@@ -82,3 +82,8 @@ body{
 .wrapper hr{
     margin: 40px auto;
 }
+.nav {
+ display: flex;
+ flex-direction: row;
+ justify-content: space-between;
+}

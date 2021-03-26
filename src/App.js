@@ -2,6 +2,16 @@
 import './App.css';
 import { useState } from "react";
 import { useEffect } from "react";
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/ToolBar';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import UserCredentialsDialog from './UserCredentialsDialog/UserCredentialsDialog.js'
+import Snackbar from '@material-ui/core/Snackbar'
+import Alert from '@material-ui/lab/alert'
+import { getUserToken, saveUserToken } from
+"./localStorage";
+
 
 var SERVER_URL = "http://127.0.0.1:5000"
 function App() {
@@ -11,7 +21,15 @@ function App() {
   let [lbpInput,setLbpInput] = useState("");
   let [usdInput,setUsdInput] = useState("");
   let [transactionType,setTransactionType] = useState("usd-to-lbp");
+   let [userToken, setUserToken] = useState(getUserToken())
 
+  const States = {
+ PENDING: "PENDING",
+ USER_CREATION: "USER_CREATION",
+ USER_LOG_IN: "USER_LOG_IN",
+ USER_AUTHENTICATED: "USER_AUTHENTICATED",
+};
+  let [authState, setAuthState] = useState(States.PENDING)
   function fetchRates() {
    fetch(`${SERVER_URL}/exchangeRate`)
    .then(function(response){
@@ -24,7 +42,10 @@ function App() {
  }
 useEffect(fetchRates, []);
 
-
+function logout() {
+ setUserToken(null);
+ saveUserToken(null);
+}
 
 async function postData(url = '', data = {}) {
 
@@ -42,6 +63,39 @@ async function postData(url = '', data = {}) {
   });
   return response.json(); // parses JSON response into native JavaScript objects
 }
+function login(username, password) {
+ return fetch(`${SERVER_URL}/auth`, {
+ method: "POST",
+ headers: {
+ "Content-Type": "application/json",
+ },
+ body: JSON.stringify({
+ user_name: username,
+ password: password,
+ }),
+ })
+ .then((response) => response.json())
+ .then((body) => {
+ setAuthState(States.USER_AUTHENTICATED);
+ setUserToken(body.token);
+ saveUserToken(body.token);
+ });
+ }
+
+
+ function createUser(username, password) {
+ return fetch(`${SERVER_URL}/user`, {
+ method: "POST",
+ headers: {
+ "Content-Type": "application/json",
+ },
+ body: JSON.stringify({
+ user_name: username,
+ password: password,
+ }),
+ }).then((response) => login(username, password));
+ }
+
 
 
 
@@ -51,16 +105,46 @@ function addItem(){
     let lbp = lbpInput.lbpInput;
     //addButton.reset();
     postData('http://127.0.0.1:5000/', {'usd':usdInput,'lbp':lbpInput,'usd_to_lbp':TransactionType.value })
-
 }
 
-
-
   return (<div>
-    <div className = "header">
-        <h1>The boss LBP Exchange Tracker</h1>
+    <Snackbar
+     elevation={6}
+     variant="filled"
+     open={authState === States.USER_AUTHENTICATED}
+     autoHideDuration={2000}
+     onClose={() => setAuthState(States.PENDING)}
+    >
+     <Alert severity="success">Success</Alert>
+    </Snackbar>
+    {authState === States.USER_CREATION &&
+    <UserCredentialsDialog open = {true} title = "Register" submitText = "Submit" onClose={()=> setAuthState(States.PENDING)} onSubmit={(username,password)=>createUser(username,password) }/>}
+    {authState === States.USER_LOG_IN &&
+    <UserCredentialsDialog open = {true} title = "Login" submitText = "Submit" onClose={()=> setAuthState(States.PENDING)} onSubmit={(username,password)=>login(username, password)}/>}
+    <div>
+    <AppBar position="static">
+    <Toolbar classes={{ root: "nav" }}>
+    <Typography variant="h5"style={{ flex: 1 }}>The BOSS LBP exchange tracker</Typography>
+
+    {userToken !== null ? (
+ <Button color="inherit" onClick={logout}>Logout</Button>) : (<div>
+   <Button
+ color="inherit"
+ onClick={() => setAuthState(States.USER_CREATION)}
+ >Register</Button>
+ <Button
+ color="inherit"
+ onClick={() => setAuthState(States.USER_LOG_IN)}>Login</Button>
+ </div>
+)}
+    </Toolbar>
+    </AppBar>
+
     </div>
+
+
     <div className = "wrapper">
+
         <h2>Todays Exchange Rate: </h2>
         <p> LBP to USD Exchange Rate</p>
         <h3>Buy USD: <span id = "buy-usd-rate">{buyUsdRate}</span></h3>
